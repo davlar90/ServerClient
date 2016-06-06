@@ -14,21 +14,66 @@ namespace Client
 {
     public partial class ClientForm : Form
     {
-        private Socket _ClientSocket;
+        static string serverResponse;
+        static int connectionAttempts = 0;
+        public static string ip;
+        static string connectingClient = "";
+        
+        public static Socket _ClientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         public ClientForm()
         {
             InitializeComponent();
         }
 
+        private static void Connect()
+        {
+            
+             
+                try
+                {
+                    connectionAttempts++;
+                    _ClientSocket.Connect(IPAddress.Parse(ip), 19777);
+                    string clientInfo = connectingClient;
+                    byte[] buffer = Encoding.ASCII.GetBytes(clientInfo);
+                    _ClientSocket.Send(buffer);
+
+
+                    byte[] recievedBuffer = new byte[1024];
+                    int recievedTrimmed = _ClientSocket.Receive(recievedBuffer);
+                    byte[] data = new byte[recievedTrimmed];
+                    Array.Copy(recievedBuffer, data, recievedTrimmed);
+
+                serverResponse = Encoding.ASCII.GetString(data);
+                    
+                    
+                    
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
+            
+        }
+
         private void btnConnect_Click(object sender, EventArgs e)
         {
+            ip = tbIP.Text;
+            connectingClient = tbUsername.Text;
             try
             {
-                _ClientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                _ClientSocket.BeginConnect(new IPEndPoint(IPAddress.Parse(tbIP.Text), 19777), new AsyncCallback(ConnectCallback), null);
 
-                SendUserConnectedInfo();
-                
+                Connect();
+                if (tbUsername.Text == serverResponse)
+                {
+                    lblConnectionAttempts.Text = "Connected to server";
+
+                    //this.Hide();
+
+                    MainForm fm = new MainForm();
+                    fm.Show();
+                }
+               
             }
             catch (Exception ex)
             {
@@ -37,7 +82,7 @@ namespace Client
             }
         }
 
-        private void ConnectCallback(IAsyncResult AR)
+        private static void ConnectCallback(IAsyncResult AR)
         {
             try
             {
@@ -50,42 +95,14 @@ namespace Client
             }
         }
 
-        private void SendUserConnectedInfo()
-        {
-            try
-            {
-                byte[] buffer = Encoding.ASCII.GetBytes(tbUsername.Text);
-                _ClientSocket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, new AsyncCallback(SendCallback), null);
-            }
-            catch (SocketException ex)
-            {
-                MessageBox.Show(ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (Exception ex)
-            {
 
-                MessageBox.Show(ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+        
 
         private void btnSend_Click(object sender, EventArgs e)
         {
-            try
-            {
-                byte[] buffer = Encoding.ASCII.GetBytes(tbIP.Text);
-                _ClientSocket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, new AsyncCallback(SendCallback), null);
-            }
-            catch (SocketException ex)
-            {
-                MessageBox.Show(ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (Exception ex)
-            {
 
-                MessageBox.Show(ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
-        private void SendCallback(IAsyncResult AR) 
+        private static void SendCallback(IAsyncResult AR) 
         {
             try
             {

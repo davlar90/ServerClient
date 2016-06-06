@@ -12,10 +12,17 @@ using System.Windows.Forms;
 
 namespace Server
 {
+    // //www.codeproject.com/Articles/488668/Csharp-NET-TCP-Server
     public partial class ServerForm : Form
     {
-        private Socket _serverSocket, _clientSOcket;
-        private byte[] _buffer;
+        private static int playersConnected = 0;
+        private static Socket _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+
+        private static byte[] _buffer = new byte[1024];
+        private static List<Socket> _clientSockets = new List<Socket>();
+        private static List<string> clientsConnected = new List<string>();
+
         public ServerForm()
         {
             InitializeComponent();
@@ -26,9 +33,9 @@ namespace Server
         {
             try
             {
-                _serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                
                 _serverSocket.Bind(new IPEndPoint(IPAddress.Any, 19777));
-                _serverSocket.Listen(0);
+                _serverSocket.Listen(1);
                 _serverSocket.BeginAccept(new AsyncCallback(AcceptCallback), null);
             }
 
@@ -42,9 +49,11 @@ namespace Server
         {
             try
             {
-                _clientSOcket = _serverSocket.EndAccept(AR);
-                _buffer = new byte[_clientSOcket.ReceiveBufferSize];
-                _clientSOcket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, new AsyncCallback(ReciveCallback), null);
+                Socket socket = _serverSocket.EndAccept(AR);
+                _clientSockets.Add(socket);
+                socket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, new AsyncCallback(ReciveCallback), socket);
+                _serverSocket.BeginAccept(new AsyncCallback(AcceptCallback), null);
+               
 
                 
             }
@@ -54,22 +63,28 @@ namespace Server
                 MessageBox.Show(ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        
         private void ReciveCallback(IAsyncResult AR)
         {
             try
             {
-                int received = _clientSOcket.EndReceive(AR);
+                Socket socket = (Socket)AR.AsyncState;
+                int received = socket.EndReceive(AR);
 
-                if (received == 0)
-                {
-                    return;
-                }
-                
-                Array.Resize(ref _buffer, received);
-                string text = Encoding.ASCII.GetString(_buffer);
+                byte[] dataBuff = new byte[received];
+                Array.Copy(_buffer, dataBuff, received);
+                string text = Encoding.ASCII.GetString(dataBuff);
+
+                clientsConnected.Add(text);
                 AppendToTextBox(text + " has connected.");
-                Array.Resize(ref _buffer, _clientSOcket.ReceiveBufferSize);
-                _clientSOcket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, new AsyncCallback(ReciveCallback), null);
+                playersConnected++;
+                Player p = new Player(playersConnected, text);
+
+                p.AddPlayer(p);
+                
+
+                socket.BeginSend(dataBuff, 0, dataBuff.Length, SocketFlags.None, new AsyncCallback(SendCallback), socket);
+                socket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, new AsyncCallback(ReciveCallback), null);
 
                 
 
@@ -80,7 +95,11 @@ namespace Server
                 MessageBox.Show(ex.Message, Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
+        private void SendCallback(IAsyncResult AR)
+        {
+            Socket socket = (Socket)AR.AsyncState;
+            socket.EndSend(AR);
+        }
         private void AppendToTextBox(string text)
         {
             MethodInvoker invoker = new MethodInvoker(delegate
@@ -95,5 +114,24 @@ namespace Server
         {
 
         }
+
+        private void btnServerSend_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Socket socket = (Socket)AR.AsyncState;
+                int received = socket.EndReceive(AR);
+
+                byte[] dataBuff = new byte[received];
+                Array.Copy(_buffer, dataBuff, received);
+                string text = Encoding.ASCII.GetString(dataBuff);
+
+              
+
+
+                socket.BeginSend(dataBuff, 0, dataBuff.Length, SocketFlags.None, new AsyncCallback(SendCallback), socket);
+                socket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.None, new AsyncCallback(ReciveCallback), null);
+
+            }
     }
 }

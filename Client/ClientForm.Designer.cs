@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.lblStatus = new System.Windows.Forms.Label();
+            this.lblConnectionAttempts = new System.Windows.Forms.Label();
             this.btnConnect = new System.Windows.Forms.Button();
             this.btnSend = new System.Windows.Forms.Button();
             this.tbIP = new System.Windows.Forms.TextBox();
@@ -37,14 +37,14 @@
             this.tbUsername = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
-            // lblStatus
+            // lblConnectionAttempts
             // 
-            this.lblStatus.AutoSize = true;
-            this.lblStatus.Location = new System.Drawing.Point(387, 35);
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(78, 13);
-            this.lblStatus.TabIndex = 0;
-            this.lblStatus.Text = "Not connected";
+            this.lblConnectionAttempts.AutoSize = true;
+            this.lblConnectionAttempts.Location = new System.Drawing.Point(93, 109);
+            this.lblConnectionAttempts.Name = "lblConnectionAttempts";
+            this.lblConnectionAttempts.Size = new System.Drawing.Size(78, 13);
+            this.lblConnectionAttempts.TabIndex = 0;
+            this.lblConnectionAttempts.Text = "Not connected";
             // 
             // btnConnect
             // 
@@ -109,7 +109,7 @@
             this.Controls.Add(this.tbIP);
             this.Controls.Add(this.btnSend);
             this.Controls.Add(this.btnConnect);
-            this.Controls.Add(this.lblStatus);
+            this.Controls.Add(this.lblConnectionAttempts);
             this.Name = "ClientForm";
             this.Text = "Client";
             this.ResumeLayout(false);
@@ -119,7 +119,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Label lblStatus;
+        private System.Windows.Forms.Label lblConnectionAttempts;
         private System.Windows.Forms.Button btnConnect;
         private System.Windows.Forms.Button btnSend;
         private System.Windows.Forms.TextBox tbIP;
